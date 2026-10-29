@@ -1,10 +1,8 @@
-#include <print>
-#include <fstream>
-#include <string>
-#include <filesystem>
-#include <cctype>
-#include <random>
 #include <chrono>
+#include <filesystem>
+#include <fstream>
+#include <print>
+#include <string>
 #include "solver.h"
 
 const std::string FORMULA_FILENAME = std::string(SOURCE_DIR) + "/formula.txt";
@@ -39,8 +37,14 @@ void create_sample_formula_file(const std::string& filename)
             bool first = true;
             for (int i = 0; i < 8; ++i)
             {
-                if (i == skip) continue;
-                if (!first) outfile << ",";
+                if (i == skip)
+                {
+                    continue;
+                }
+                if (!first)
+                {
+                    outfile << ",";
+                }
                 outfile << clauses[i];
                 first = false;
             }
@@ -52,12 +56,14 @@ void create_sample_formula_file(const std::string& filename)
 
 bool validate_formula_format(const std::string& content)
 {
-    if (content.empty()) return false;
+    if (content.empty())
+        return false;
 
     bool has_digit = false;
-    for (char c : content)
+    for (const char c : content)
     {
-        if (std::isdigit(c)) has_digit = true;
+        if (std::isdigit(c))
+            has_digit = true;
         else if (c != ',' && c != '+' && c != '-' && !std::isspace(static_cast<unsigned char>(c)))
         {
             return false;
@@ -66,31 +72,41 @@ bool validate_formula_format(const std::string& content)
     return has_digit;
 }
 
-std::string generate_formula(std::size_t num_literals)
+std::string generate_formula(const std::size_t num_literals)
 {
-    std::size_t num_clauses = static_cast<std::size_t>(1) << num_literals;
+    const std::size_t num_clauses = static_cast<std::size_t>(1) << num_literals;
     std::string formula;
 
     for (std::size_t mask = 0; mask < num_clauses; ++mask)
     {
         for (std::size_t j = 1; j <= num_literals; ++j)
         {
-            bool negate = (mask >> (num_literals - j)) & 1;
-            if (negate) formula += "-";
+            const bool negate = (mask >> (num_literals - j)) & 1;
+            if (negate)
+            {
+                formula += "-";
+            }
             formula += std::to_string(j);
-            if (j < num_literals) formula += "+";
+            if (j < num_literals)
+            {
+                formula += "+";
+            }
         }
-        if (mask < num_clauses - 1) formula += ",";
+        if (mask < num_clauses - 1)
+        {
+            formula += ",";
+        }
     }
     return formula;
 }
 
-int main(int argc, char* argv[])
+int main(const int argc, char* argv[])
 {
     auto run_formula = [](const std::string& formula_str) {
-        auto t0 = std::chrono::high_resolution_clock::now();
+        const auto t0 = std::chrono::high_resolution_clock::now();
 
-        solver::Problem problem(formula_str);
+        const solver::Formula formula(formula_str);
+        solver::Problem problem(formula);
         solver::Solver solver_instance;
 
         if (problem.formula.get_literals().size() < 64)
@@ -99,10 +115,14 @@ int main(int argc, char* argv[])
             problem.formula.print();
         }
 
-        std::printf("Clauses: %ld, Literals: %lld\n", problem.formula.get_clause_count(), problem.formula.get_max_literal());
+        std::printf(
+            "Clauses: %ld, Literals: %lld\n",
+            problem.formula.get_clause_count(),
+            problem.formula.get_max_literal()
+        );
 
-        bool is_sat = solver_instance.solve(problem);
-        auto t1 = std::chrono::high_resolution_clock::now();
+        const bool is_sat = solver_instance.solve(problem);
+        const auto t1 = std::chrono::high_resolution_clock::now();
 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
         std::println("Time elapsed: {} ms", duration);
@@ -124,10 +144,10 @@ int main(int argc, char* argv[])
 
     if (argc >= 2)
     {
-        std::size_t num_literals = std::stoull(argv[1]);
+        const std::size_t num_literals = std::stoull(argv[1]);
         if (num_literals > 0)
         {
-            std::string formula_string = generate_formula(num_literals);
+            const std::string formula_string = generate_formula(num_literals);
             run_formula(formula_string);
         }
         return 0;
@@ -137,7 +157,7 @@ int main(int argc, char* argv[])
     {
         std::println("File '{}' not found.", FORMULA_FILENAME);
         create_sample_formula_file(FORMULA_FILENAME);
-        
+
         std::println("An input file has been created at '{}'.", FORMULA_FILENAME);
         print_help();
         return 0;
@@ -160,7 +180,10 @@ int main(int argc, char* argv[])
 
         if (!validate_formula_format(line))
         {
-            std::println("Error parsing input file '{}', contents do not match the expected formula format.", FORMULA_FILENAME);
+            std::println(
+                "Error parsing input file '{}', contents do not match the expected formula format.",
+                FORMULA_FILENAME
+            );
             print_help();
             return 1;
         }

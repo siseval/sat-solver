@@ -1,56 +1,62 @@
 #pragma once
 
-#include <vector>
 #include <unordered_set>
+#include <vector>
 
+#include "assignment.h"
 #include "formula.h"
+
 
 namespace solver
 {
+    /**
+     * Class modeling a SAT-problem.
+     * It contains a CNF-formula, an assignment, 
+     * as well as mutable state that is changed in the course of solving the problem
+     */
+    struct Problem
+    {
+        const Formula formula;
+        Assignment assignment;
+        /**
+         * A mapping from literals to the clauses where they are found. 
+         * This is used to avoid iterating unnecessarily to find relevant clauses, but it is not updated.
+         */
+        std::vector<std::unordered_set<std::size_t>> literal_occurrences;
 
-class Assignment
-{
+        /**
+         * Mapping from clause index to bool indicating whether the clause is satisfied.
+         */
+        std::vector<bool> clauses_satisfied;
+        
+        /**
+         * Mapping from literal to its number of occurrences in the formula.
+         * Positive literals span from the start to the middle of the vector, 
+         * negative (negated) literals span from the end to the middle.
+         */
+        std::vector<std::size_t> literal_num_occurrences;
+        
+        /**
+         * Mapping from clause index to how many literals in that clause 
+         * have not yet been removed through simplification.
+         */
+        std::vector<std::size_t> clauses_remaining_literals;
+        
+        /**
+         * Total number of satisfied clauses.
+         */
+        std::size_t num_clauses_satisfied = 0;
 
-public:
+        /**
+         * Constructor which prepares the mappings, and populates the literal_occurrences mapping.
+         * @param formula CNF-formula object.
+         */
+        explicit Problem(const Formula& formula);
 
-    Assignment(std::size_t count) 
-        : count(count)
-        , assigned(std::vector<bool>(count))
-        , values(std::vector<bool>(count)) {}
-
-    void set_assigned(Literal literal, bool value);
-    void set_value(Literal literal, bool value);
-
-    bool get_assigned(Literal literal);
-    bool get_value(Literal literal);
-
-    void print();
-
-private:
-
-    std::size_t count;
-    std::vector<bool> assigned;
-    std::vector<bool> values;
-};
-
-struct Problem
-{
-    Formula formula;
-    Assignment assignment;
-    std::vector<std::unordered_set<std::size_t>> literal_occurences;
-
-    std::vector<bool> clauses_satisfied;
-    std::vector<std::size_t> literal_num_occurences;
-    std::vector<std::size_t> clauses_remaining_literals;
-    std::size_t num_clauses_satisfied = 0;
-
-    Problem(const Formula& formula);
-
-    std::unordered_set<std::size_t>& get_occurences(const Literal literal);
-    std::size_t get_num_occurences(const Literal literal);
-    void increment_num_occurences(const Literal literal, const int delta);
-    void assign(const Literal literal, const bool value);
-    void assign_true(const Literal literal);
-};
-
+        std::unordered_set<std::size_t>& get_occurrences(Literal literal);
+        std::size_t get_num_occurrences(Literal literal) const;
+        void increment_num_occurrences(Literal literal, int delta);
+        void assign(Literal literal, bool value);
+        void assign_true(Literal literal);
+    };
 }
